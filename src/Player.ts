@@ -1071,6 +1071,11 @@ export class Player implements ISerializable<SerializedPlayer, Player> {
         }
       });
 
+      // PoliticalAgendas Unity P4 hook
+      if (card.tags.includes(Tags.SPACE) && PartyHooks.shouldApplyPolicy(game, PartyName.UNITY, 'up04')) {
+        cost -= 2;
+      }
+
       return Math.max(cost, 0);
     }
 
@@ -2411,7 +2416,7 @@ export class Player implements ISerializable<SerializedPlayer, Player> {
       if (this.fleetSize > 0) this.fleetSize--;
     }
 
-    public canPlayColonyPlacementCard(game: Game): boolean {
+    public hasAvailableColonyTileToBuildOn(game: Game): boolean {
       let colonyTilesAlreadyBuiltOn: number = 0;
 
       game.colonies.forEach((colony) => {

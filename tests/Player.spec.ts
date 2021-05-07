@@ -17,6 +17,10 @@ import {CardName} from '../src/CardName';
 import {GlobalParameter} from '../src/GlobalParameter';
 import {TestingUtils} from './TestingUtils';
 import {Units} from '../src/Units';
+import {SelfReplicatingRobots} from '../src/cards/promo/SelfReplicatingRobots';
+import {OrOptions} from '../src/inputs/OrOptions';
+import {GameLoader} from '../src/database/GameLoader';
+import {Pets} from '../src/cards/base/Pets';
 
 describe('Player', function() {
   it('should initialize with right defaults', function() {
@@ -43,7 +47,7 @@ describe('Player', function() {
     player.playedCards.push(new LunarBeam());
     const action = card.play(player); //  Game.newInstance('foobar', [player, player2, player3], player));
     if (action !== undefined) {
-      player.setWaitingFor(action, () => undefined);
+      player.setWaitingFor(action);
       player.process([[player2.id]]);
       expect(player.getProduction(Resources.ENERGY)).to.eq(1);
     }
@@ -58,7 +62,7 @@ describe('Player', function() {
     player.playedCards.push(new LunarBeam());
     const action = card.play(player); // , Game.newInstance('foobar', [player, redPlayer], player));
     if (action !== undefined) {
-      player.setWaitingFor(action, () => undefined);
+      player.setWaitingFor(action);
       expect(player.getWaitingFor()).is.not.undefined;
       expect(function() {
         player.process([[]]);
@@ -81,7 +85,7 @@ describe('Player', function() {
     const action = card.play(player); // Game.newInstance('foobar', [player, redPlayer], player));
     expect(action).is.not.undefined;
     if (action === undefined) return;
-    player.setWaitingFor(action, () => undefined);
+    player.setWaitingFor(action);
     expect(player.getWaitingFor()).is.not.undefined;
     expect(function() {
       player.process([[]]);
@@ -120,7 +124,7 @@ describe('Player', function() {
     const mockOption = new SelectOption('Mock select option', 'Save', () => {
       return mockOption2;
     });
-    player.setWaitingFor(mockOption, () => done());
+    player.setWaitingFor(mockOption, done);
     player.process([['1']]);
     expect(player.getWaitingFor()).not.to.be.undefined;
     player.process([['1']]);
@@ -279,227 +283,302 @@ describe('Player', function() {
     expect(newPlayer.color).eq(Color.PURPLE);
     expect(newPlayer.tradesThisGeneration).eq(100);
   });
-});
-
-it('has units', () => {
-  const player = TestPlayers.BLUE.newPlayer();
-
-  const units: Units = Units.of({});
-  expect(player.hasUnits(units)).is.true;
-
-  units.megacredits = 1;
-  expect(player.hasUnits(units)).is.false;
-  player.megaCredits = 1;
-  expect(player.hasUnits(units)).is.true;
-
-  units.steel = 1;
-  expect(player.hasUnits(units)).is.false;
-  player.steel = 1;
-  expect(player.hasUnits(units)).is.true;
-
-  units.titanium = 1;
-  expect(player.hasUnits(units)).is.false;
-  player.titanium = 1;
-  expect(player.hasUnits(units)).is.true;
-
-  units.plants = 1;
-  expect(player.hasUnits(units)).is.false;
-  player.plants = 1;
-  expect(player.hasUnits(units)).is.true;
-
-  units.energy = 1;
-  expect(player.hasUnits(units)).is.false;
-  player.energy = 1;
-  expect(player.hasUnits(units)).is.true;
-
-  units.heat = 1;
-  expect(player.hasUnits(units)).is.false;
-  player.heat = 1;
-  expect(player.hasUnits(units)).is.true;
-});
-
-
-it('deduct units', () => {
-  function asUnits(player: Player): Units {
-    return {
-      megacredits: player.megaCredits,
-      steel: player.steel,
-      titanium: player.titanium,
-      plants: player.plants,
-      energy: player.energy,
-      heat: player.heat,
+  it('pulls self replicating robots target cards', function() {
+    const player = TestPlayers.BLUE.newPlayer();
+    expect(player.getSelfReplicatingRobotsTargetCards().length).eq(0);
+    const srr = new SelfReplicatingRobots();
+    player.playedCards.push(srr);
+    srr.targetCards.push({card: new LunarBeam(), resourceCount: 0});
+    expect(player.getSelfReplicatingRobotsTargetCards().length).eq(1);
+  });
+  it('uses undo', function() {
+    const player = TestPlayers.BLUE.newPlayer();
+    player.beginner = true;
+    const game = Game.newInstance('foo', [player], player);
+    game.gameOptions.undoOption = true;
+    player.process([['1'], ['Power Plant:SP']]);
+    const options = player.getWaitingFor() as OrOptions;
+    expect((player as any).usedUndo).is.false;
+    player.process([[String(options.options.length - 1)], ['']]);
+    expect((player as any).usedUndo).is.true;
+    expect(player.getWaitingFor()).is.undefined;
+  });
+  it('progresses game if undo operation fails', function() {
+    const player = TestPlayers.BLUE.newPlayer();
+    player.beginner = true;
+    const game = Game.newInstance('foo', [player], player);
+    game.gameOptions.undoOption = true;
+    player.process([['1'], ['Power Plant:SP']]);
+    const options = player.getWaitingFor() as OrOptions;
+    expect((player as any).usedUndo).is.false;
+    const instance = GameLoader.getInstance();
+    const originRestore = instance.restoreGameAt;
+    let restoreGameCb: ((err: any) => void) | undefined = undefined;
+    instance.restoreGameAt = function(_gameId: string, _saveId: number, cb: (err: any) => void) {
+      restoreGameCb = cb;
+      instance.restoreGameAt = originRestore;
     };
-  };
-
-  const player = TestPlayers.BLUE.newPlayer();
-
-  expect(asUnits(player)).deep.eq({
-    megacredits: 0,
-    steel: 0,
-    titanium: 0,
-    plants: 0,
-    energy: 0,
-    heat: 0,
+    player.process([[String(options.options.length - 1)], ['']]);
+    expect((player as any).usedUndo).is.true;
+    if (restoreGameCb === undefined) {
+      throw new Error('did not call to restore game');
+    }
+    expect(player.getWaitingFor()).is.undefined;
+    (restoreGameCb as (err: any) => void)('unable to restore game');
+    expect((player as any).usedUndo).is.false;
+    expect(player.getWaitingFor()).not.is.undefined;
   });
 
-  player.megaCredits = 20;
-  player.steel = 19;
-  player.titanium = 18;
-  player.plants = 17;
-  player.energy = 16;
-  player.heat = 15;
+  it('has units', () => {
+    const player = TestPlayers.BLUE.newPlayer();
 
-  player.deductUnits(Units.of({megacredits: 10}));
-  expect(asUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 19,
-    titanium: 18,
-    plants: 17,
-    energy: 16,
-    heat: 15,
+    const units: Units = Units.of({});
+    expect(player.hasUnits(units)).is.true;
+
+    units.megacredits = 1;
+    expect(player.hasUnits(units)).is.false;
+    player.megaCredits = 1;
+    expect(player.hasUnits(units)).is.true;
+
+    units.steel = 1;
+    expect(player.hasUnits(units)).is.false;
+    player.steel = 1;
+    expect(player.hasUnits(units)).is.true;
+
+    units.titanium = 1;
+    expect(player.hasUnits(units)).is.false;
+    player.titanium = 1;
+    expect(player.hasUnits(units)).is.true;
+
+    units.plants = 1;
+    expect(player.hasUnits(units)).is.false;
+    player.plants = 1;
+    expect(player.hasUnits(units)).is.true;
+
+    units.energy = 1;
+    expect(player.hasUnits(units)).is.false;
+    player.energy = 1;
+    expect(player.hasUnits(units)).is.true;
+
+    units.heat = 1;
+    expect(player.hasUnits(units)).is.false;
+    player.heat = 1;
+    expect(player.hasUnits(units)).is.true;
   });
 
-  player.deductUnits(Units.of({steel: 10}));
-  expect(asUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 18,
-    plants: 17,
-    energy: 16,
-    heat: 15,
-  });
 
-  player.deductUnits(Units.of({titanium: 10}));
-  expect(asUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 17,
-    energy: 16,
-    heat: 15,
-  });
-
-  player.deductUnits(Units.of({plants: 10}));
-  expect(asUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 7,
-    energy: 16,
-    heat: 15,
-  });
-
-  player.deductUnits(Units.of({energy: 10}));
-  expect(asUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 7,
-    energy: 6,
-    heat: 15,
-  });
-
-  player.deductUnits(Units.of({heat: 10}));
-  expect(asUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 7,
-    energy: 6,
-    heat: 5,
-  });
-});
-
-it('deduct production', () => {
-  function asProductionUnits(player: Player): Units {
-    return {
-      megacredits: player.getProduction(Resources.MEGACREDITS),
-      steel: player.getProduction(Resources.STEEL),
-      titanium: player.getProduction(Resources.TITANIUM),
-      plants: player.getProduction(Resources.PLANTS),
-      energy: player.getProduction(Resources.ENERGY),
-      heat: player.getProduction(Resources.HEAT),
+  it('deduct units', () => {
+    function asUnits(player: Player): Units {
+      return {
+        megacredits: player.megaCredits,
+        steel: player.steel,
+        titanium: player.titanium,
+        plants: player.plants,
+        energy: player.energy,
+        heat: player.heat,
+      };
     };
-  };
 
-  const player = TestPlayers.BLUE.newPlayer();
+    const player = TestPlayers.BLUE.newPlayer();
 
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 0,
-    steel: 0,
-    titanium: 0,
-    plants: 0,
-    energy: 0,
-    heat: 0,
+    expect(asUnits(player)).deep.eq({
+      megacredits: 0,
+      steel: 0,
+      titanium: 0,
+      plants: 0,
+      energy: 0,
+      heat: 0,
+    });
+
+    player.megaCredits = 20;
+    player.steel = 19;
+    player.titanium = 18;
+    player.plants = 17;
+    player.energy = 16;
+    player.heat = 15;
+
+    player.deductUnits(Units.of({megacredits: 10}));
+    expect(asUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 19,
+      titanium: 18,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.deductUnits(Units.of({steel: 10}));
+    expect(asUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 18,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.deductUnits(Units.of({titanium: 10}));
+    expect(asUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.deductUnits(Units.of({plants: 10}));
+    expect(asUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 7,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.deductUnits(Units.of({energy: 10}));
+    expect(asUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 7,
+      energy: 6,
+      heat: 15,
+    });
+
+    player.deductUnits(Units.of({heat: 10}));
+    expect(asUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 7,
+      energy: 6,
+      heat: 5,
+    });
   });
 
-  player.setProductionForTest({
-    megacredits: 20,
-    steel: 19,
-    titanium: 18,
-    plants: 17,
-    energy: 16,
-    heat: 15,
+  it('deduct production', () => {
+    function asProductionUnits(player: Player): Units {
+      return {
+        megacredits: player.getProduction(Resources.MEGACREDITS),
+        steel: player.getProduction(Resources.STEEL),
+        titanium: player.getProduction(Resources.TITANIUM),
+        plants: player.getProduction(Resources.PLANTS),
+        energy: player.getProduction(Resources.ENERGY),
+        heat: player.getProduction(Resources.HEAT),
+      };
+    };
+
+    const player = TestPlayers.BLUE.newPlayer();
+
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 0,
+      steel: 0,
+      titanium: 0,
+      plants: 0,
+      energy: 0,
+      heat: 0,
+    });
+
+    player.setProductionForTest({
+      megacredits: 20,
+      steel: 19,
+      titanium: 18,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.adjustProduction(Units.of({megacredits: -10}));
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 19,
+      titanium: 18,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.adjustProduction(Units.of({steel: -10}));
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 18,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.adjustProduction(Units.of({titanium: -10}));
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 17,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.adjustProduction(Units.of({plants: -10}));
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 7,
+      energy: 16,
+      heat: 15,
+    });
+
+    player.adjustProduction(Units.of({energy: -10}));
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 7,
+      energy: 6,
+      heat: 15,
+    });
+
+    player.adjustProduction(Units.of({heat: -10}));
+    expect(asProductionUnits(player)).deep.eq({
+      megacredits: 10,
+      steel: 9,
+      titanium: 8,
+      plants: 7,
+      energy: 6,
+      heat: 5,
+    });
   });
 
-  player.adjustProduction(Units.of({megacredits: -10}));
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 19,
-    titanium: 18,
-    plants: 17,
-    energy: 16,
-    heat: 15,
-  });
+  it('addResourceTo', () => {
+    const player = TestPlayers.BLUE.newPlayer();
+    const game = Game.newInstance('foobar', [player], player);
 
-  player.adjustProduction(Units.of({steel: -10}));
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 18,
-    plants: 17,
-    energy: 16,
-    heat: 15,
-  });
+    const log = game.gameLog;
+    log.length = 0; // Empty it out.
 
-  player.adjustProduction(Units.of({titanium: -10}));
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 17,
-    energy: 16,
-    heat: 15,
-  });
+    const card = new Pets();
+    expect(card.resourceCount).eq(0);
+    expect(log.length).eq(0);
 
-  player.adjustProduction(Units.of({plants: -10}));
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 7,
-    energy: 16,
-    heat: 15,
-  });
+    player.addResourceTo(card);
+    expect(card.resourceCount).eq(1);
+    expect(log.length).eq(0);
 
-  player.adjustProduction(Units.of({energy: -10}));
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 7,
-    energy: 6,
-    heat: 15,
-  });
+    player.addResourceTo(card, 1);
+    expect(card.resourceCount).eq(2);
+    expect(log.length).eq(0);
 
-  player.adjustProduction(Units.of({heat: -10}));
-  expect(asProductionUnits(player)).deep.eq({
-    megacredits: 10,
-    steel: 9,
-    titanium: 8,
-    plants: 7,
-    energy: 6,
-    heat: 5,
+    player.addResourceTo(card, 3);
+    expect(card.resourceCount).eq(5);
+    expect(log.length).eq(0);
+
+    player.addResourceTo(card, {qty: 3, log: true});
+    expect(log.length).eq(1);
+    const logEntry = log[0];
+    expect(logEntry.data[1].value).eq('3');
+    expect(logEntry.data[3].value).eq('Pets');
   });
 });
 
@@ -531,3 +610,23 @@ function titlesToGlobalParameter(title: string): GlobalParameter {
   }
   throw new Error('title does not match any description: ' + title);
 }
+
+it('adds resources', () => {
+  const player = TestPlayers.BLUE.newPlayer();
+  player.megaCredits = 10;
+  // adds any positive amount
+  player.addResource(Resources.MEGACREDITS, 12);
+  expect(player.megaCredits).eq(22);
+  // removes more than we have
+  player.addResource(Resources.MEGACREDITS, -23);
+  expect(player.megaCredits).eq(0);
+  // adds any positive amount
+  player.addResource(Resources.MEGACREDITS, 5);
+  expect(player.megaCredits).eq(5);
+  // removes less than we have
+  player.addResource(Resources.MEGACREDITS, -4);
+  expect(player.megaCredits).eq(1);
+  // makes no change
+  player.addResource(Resources.MEGACREDITS, 0);
+  expect(player.megaCredits).eq(1);
+});

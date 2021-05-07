@@ -12,7 +12,7 @@ import {LogHelper} from '../../LogHelper';
 import {Resources} from '../../Resources';
 import {CardType} from '../CardType';
 import {CardRenderer} from '../render/CardRenderer';
-import {CardRenderItemSize} from '../render/CardRenderItemSize';
+import {Size} from '../render/Size';
 
 export class Astrodrill extends Card implements IActionCard, CorporationCard {
   constructor() {
@@ -20,17 +20,17 @@ export class Astrodrill extends Card implements IActionCard, CorporationCard {
       cardType: CardType.CORPORATION,
       name: CardName.ASTRODRILL,
       tags: [Tags.SPACE],
-      startingMegaCredits: 38,
+      startingMegaCredits: 35,
       resourceType: ResourceType.ASTEROID,
 
       metadata: {
         cardNumber: 'R21',
-        description: 'You start with 38 MC and 3 asteroid resources.',
+        description: 'You start with 35 M€ and 3 asteroid resources.',
         renderData: CardRenderer.builder((b) => {
           b.br;
-          b.megacredits(38).nbsp.asteroids(3).digit;
+          b.megacredits(35).nbsp.asteroids(3).digit;
           b.corpBox('action', (ce) => {
-            ce.vSpace(CardRenderItemSize.LARGE);
+            ce.vSpace(Size.LARGE);
             ce.action(undefined, (eb) => {
               eb.empty().startAction.asteroids(1).asterix().slash().wild(1).or();
             });
@@ -80,7 +80,7 @@ export class Astrodrill extends Card implements IActionCard, CorporationCard {
             LogHelper.logGainStandardResource(player, Resources.HEAT);
             return undefined;
           }),
-          new SelectOption('Gain 1 MC', 'Gain MC', () => {
+          new SelectOption('Gain 1 M€', 'Gain M€', () => {
             player.megaCredits += 1;
             LogHelper.logGainStandardResource(player, Resources.MEGACREDITS);
             return undefined;
@@ -89,8 +89,7 @@ export class Astrodrill extends Card implements IActionCard, CorporationCard {
       });
 
       const addResourceToSelf = new SelectOption('Add 1 asteroid to this card', 'Add asteroid', () => {
-        player.addResourceTo(this);
-        LogHelper.logAddResource(player, this);
+        player.addResourceTo(this, {log: true});
 
         return undefined;
       });
@@ -100,8 +99,7 @@ export class Astrodrill extends Card implements IActionCard, CorporationCard {
         'Add asteroid',
         asteroidCards,
         (foundCards: Array<ICard>) => {
-          player.addResourceTo(foundCards[0], 1);
-          LogHelper.logAddResource(player, foundCards[0]);
+          player.addResourceTo(foundCards[0], {log: true});
 
           return undefined;
         },

@@ -260,7 +260,7 @@ export const SelectHowToPayForProjectCard = Vue.component('select-how-to-pay-for
         floaters: this.floaters,
       };
       if (htp.megaCredits > this.player.megaCredits) {
-        this.warning = 'You don\'t have that many mega credits';
+        this.warning = 'You don\'t have that many M€';
         return;
       }
       if (this.playerinput.microbes !== undefined && htp.microbes > this.playerinput.microbes) {
@@ -319,12 +319,12 @@ export const SelectHowToPayForProjectCard = Vue.component('select-how-to-pay-for
         }
       }
 
-      const showAlert = PreferencesManager.loadValue('show_alerts') === '1';
+      const showAlert = PreferencesManager.load('show_alerts') === '1';
 
       if (totalSpentAmt > this.cost && showAlert) {
         const diff = totalSpentAmt - this.cost;
 
-        if (confirm('Warning: You are overpaying by ' + diff + ' MC')) {
+        if (confirm('Warning: You are overpaying by ' + diff + ' M€')) {
           this.onsave([[
             this.card.name,
             JSON.stringify(htp),

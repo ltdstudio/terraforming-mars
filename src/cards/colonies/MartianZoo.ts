@@ -25,7 +25,7 @@ export class MartianZoo extends Card implements IProjectCard, IResourceCard {
           b.effect('When you play an Earth tag, place an animal here.', (eb) => {
             eb.earth().played.startEffect.animals(1);
           }).br;
-          b.action('Gain 1MC per animal here.', (eb) => {
+          b.action('Gain 1M€ per animal here.', (eb) => {
             eb.empty().startAction.megacredits(1).slash().animals(1);
           });
         }),
@@ -44,10 +44,6 @@ export class MartianZoo extends Card implements IProjectCard, IResourceCard {
     if (card.tags.includes(Tags.EARTH)) {
       player.addResourceTo(this, card.tags.filter((tag) => tag === Tags.EARTH).length);
     }
-  }
-
-  public canPlay(player: Player): boolean {
-    return player.game.getCitiesInPlay() >= 2;
   }
 
   public canAct(): boolean {

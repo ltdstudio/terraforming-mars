@@ -54,13 +54,13 @@ generateVueClass(
   [],
 );
 generateVueClass(
-  'src/components/CardsFilter',
-  require('./build/src/components/CardsFilter').CardsFilter,
+  'src/components/create/CardsFilter',
+  require('./build/src/components/create/CardsFilter').CardsFilter,
   ['selectedCardNames', 'foundCardNames', 'searchTerm'],
 );
 generateVueClass(
-  'src/components/ColoniesFilter',
-  require('./build/src/components/ColoniesFilter').ColoniesFilter,
+  'src/components/create/ColoniesFilter',
+  require('./build/src/components/create/ColoniesFilter').ColoniesFilter,
   ['allColonies', 'officialColonies', 'communityColonies', 'selectedColonies'],
 );
 generateVueClass(
@@ -74,8 +74,8 @@ generateVueClass(
   ['hide'],
 );
 generateVueClass(
-  'src/components/CorporationsFilter',
-  require('./build/src/components/CorporationsFilter').CorporationsFilter,
+  'src/components/create/CorporationsFilter',
+  require('./build/src/components/create/CorporationsFilter').CorporationsFilter,
   ['cardsByModuleMap', 'customCorporationsList', 'selectedCorporations', 'corpsByModule'],
 );
 generateVueClass(
@@ -101,7 +101,7 @@ generateVueClass(
 generateVueClass(
   'src/components/LogPanel',
   require('./build/src/components/LogPanel').LogPanel,
-  ['cards', 'messages'],
+  ['cards', 'messages', 'globalEventNames'],
 );
 generateVueClass(
   'src/components/Milestone',
@@ -164,12 +164,12 @@ generateVueClass(
   ['timerText'],
 );
 generateVueClass(
-  'src/components/Preferences',
-  require('./build/src/components/Preferences').Preferences,
+  'src/components/Sidebar',
+  require('./build/src/components/Sidebar').Sidebar,
   [
     'ui', 'hide_hand', 'hide_awards_and_milestones',
     'hide_top_bar', 'small_cards', 'remove_background', 'magnify_cards',
-    'show_alerts', 'lang', 'langs', 'enable_sounds', 'hide_tile_confirmation', 
+    'show_alerts', 'lang', 'langs', 'enable_sounds', 'hide_tile_confirmation',
     'show_card_number', 'hide_discount_on_cards', 'learner_mode', 'hide_animated_sidebar',
   ],
 );

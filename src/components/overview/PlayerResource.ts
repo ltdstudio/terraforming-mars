@@ -58,7 +58,7 @@ export const PlayerResource = Vue.component('player-resource', {
       return this.type === Resources.PLANTS && this.plantsAreProtected;
     },
     showResourceValue: function(): boolean {
-      const learnerModeOn = PreferencesManager.loadValue('learner_mode') === '1';
+      const learnerModeOn = PreferencesManager.load('learner_mode') === '1';
       switch (this.type) {
       case Resources.STEEL:
         return learnerModeOn || this.steelValue > DEFAULT_STEEL_VALUE;
@@ -91,7 +91,7 @@ export const PlayerResource = Vue.component('player-resource', {
             <div class="resource_item_prod">
                 <span class="resource_item_prod_count">{{ productionSign() }}{{ production }}</span>
                 <div v-if="displayPlantsProtectedIcon()" class="shield_icon"></div>
-                <div v-if="showResourceValue()" class="resource_icon--metalbonus" v-html="getResourceValue()"></div>
+                <div v-if="showResourceValue()" class="resource_icon--metalbonus">{{ getResourceValue() }}</div>
             </div>
         </div>
     `,

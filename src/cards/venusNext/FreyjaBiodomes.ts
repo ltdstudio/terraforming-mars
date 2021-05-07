@@ -27,7 +27,7 @@ export class FreyjaBiodomes extends Card {
           b.production((pb) => pb.minus().energy(1).nbsp.plus().megacredits(2));
         }),
         description: {
-          text: 'Requires 10% on the Venus track. Add 2 Microbes or 2 Animals to another Venus card. Production: energy -1, MC +2.',
+          text: 'Requires 10% on the Venus track. Add 2 Microbes or 2 Animals to another Venus card. Production: energy -1, M€ +2.',
           align: 'left',
         },
         victoryPoints: 2,
@@ -52,10 +52,9 @@ export class FreyjaBiodomes extends Card {
         'Add resources',
         cards,
         (foundCards: Array<ICard>) => {
-          player.addResourceTo(foundCards[0], 2);
+          player.addResourceTo(foundCards[0], {qty: 2, log: true});
           player.addProduction(Resources.ENERGY, -1);
           player.addProduction(Resources.MEGACREDITS, 2);
-          LogHelper.logAddResource(player, foundCards[0], 2);
           return undefined;
         },
       );

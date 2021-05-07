@@ -20,7 +20,7 @@ export class UtopiaInvest extends Card implements IActionCard, CorporationCard {
 
       metadata: {
         cardNumber: 'R33',
-        description: 'You start with 40 MC. Increase your steel and titanium production 1 step each.',
+        description: 'You start with 40 M€. Increase your steel and titanium production 1 step each.',
         renderData: CardRenderer.builder((b) => {
           b.br;
           b.megacredits(40).nbsp.production((pb) => pb.steel(1).titanium(1));
@@ -35,8 +35,8 @@ export class UtopiaInvest extends Card implements IActionCard, CorporationCard {
   }
 
   public play(player: Player) {
-    player.addProduction(Resources.STEEL);
-    player.addProduction(Resources.TITANIUM);
+    player.addProduction(Resources.STEEL, 1);
+    player.addProduction(Resources.TITANIUM, 1);
     return undefined;
   }
   public canAct(player: Player): boolean {
@@ -56,7 +56,7 @@ export class UtopiaInvest extends Card implements IActionCard, CorporationCard {
 
     const options: Array<SelectOption> = [];
 
-    const reduceMegacredits = new SelectOption('Decrease MC production', 'Decrease production', () => {
+    const reduceMegacredits = new SelectOption('Decrease M€ production', 'Decrease production', () => {
       player.addProduction(Resources.MEGACREDITS, -1);
       player.megaCredits += 4;
       this.log(player, 'megacredit');

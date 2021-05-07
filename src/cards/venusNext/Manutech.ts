@@ -17,7 +17,7 @@ export class Manutech extends Card implements CorporationCard {
 
       metadata: {
         cardNumber: 'R23',
-        description: 'You start with 1 steel production, and 35 MC.',
+        description: 'You start with 1 steel production, and 35 M€.',
         renderData: CardRenderer.builder((b) => {
           b.br.br;
           b.production((pb) => pb.steel(1)).nbsp.megacredits(35);
@@ -32,13 +32,13 @@ export class Manutech extends Card implements CorporationCard {
   }
 
   public play(player: Player) {
-    player.addProduction(Resources.STEEL);
+    player.addProduction(Resources.STEEL, 1);
     return undefined;
   }
 
   public static onProductionGain(player: Player, resource: Resources, amount: number) {
     if (amount > 0) {
-      player.setResource(resource, amount);
+      player.addResource(resource, amount);
     }
   }
 }

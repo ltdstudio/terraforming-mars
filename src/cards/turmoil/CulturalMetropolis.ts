@@ -22,7 +22,7 @@ export class CulturalMetropolis extends Card implements IProjectCard {
       requirements: CardRequirements.builder((b) => b.party(PartyName.UNITY)),
       metadata: {
         cardNumber: 'T03',
-        description: 'Requires that Unity is ruling or that you have 2 delegates there. Decrease your energy production 1 step and increase your MC production 3 steps. Place a city tile. Place 2 delegates in 1 party.',
+        description: 'Requires that Unity is ruling or that you have 2 delegates there. Decrease your energy production 1 step and increase your M€ production 3 steps. Place a city tile. Place 2 delegates in 1 party.',
         renderData: CardRenderer.builder((b) => {
           b.production((pb) => {
             pb.minus().energy(1).br;
@@ -31,18 +31,6 @@ export class CulturalMetropolis extends Card implements IProjectCard {
         }),
       },
     });
-  }
-
-  public canPlay(player: Player): boolean {
-    const turmoil = player.game.turmoil;
-    if (turmoil !== undefined) {
-      // This card requires player has 2 delegates available
-      return turmoil.canPlay(player, PartyName.UNITY) &&
-        player.getProduction(Resources.ENERGY) >= 1 &&
-        (turmoil.getDelegatesInReserve(player.id) > 1 ||
-        (turmoil.getDelegatesInReserve(player.id) === 1 && turmoil.lobby.has(player.id)));
-    }
-    return false;
   }
 
   public play(player: Player) {

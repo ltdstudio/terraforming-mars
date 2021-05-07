@@ -11,7 +11,7 @@ import {CardType} from '../CardType';
 import {LogHelper} from '../../LogHelper';
 import {Card} from '../Card';
 import {CardRenderer} from '../render/CardRenderer';
-import {CardRenderItemSize} from '../render/CardRenderItemSize';
+import {Size} from '../render/Size';
 import {PlayerInput} from '../../PlayerInput';
 
 export class StormCraftIncorporated extends Card implements IActionCard, CorporationCard, IResourceCard {
@@ -24,12 +24,12 @@ export class StormCraftIncorporated extends Card implements IActionCard, Corpora
       cardType: CardType.CORPORATION,
       metadata: {
         cardNumber: 'R29',
-        description: 'You start with 48 MC.',
+        description: 'You start with 48 M€.',
         renderData: CardRenderer.builder((b) => {
           b.br.br.br;
           b.megacredits(48);
           b.corpBox('action', (ce) => {
-            ce.vSpace(CardRenderItemSize.LARGE);
+            ce.vSpace(Size.LARGE);
             ce.action('Add a floater to ANY card.', (eb) => {
               eb.empty().startAction.floaters(1).asterix();
             });
@@ -56,8 +56,7 @@ export class StormCraftIncorporated extends Card implements IActionCard, Corpora
   public action(player: Player) {
     const floaterCards = player.getResourceCards(ResourceType.FLOATER);
     if (floaterCards.length === 1) {
-      player.addResourceTo(this, 1);
-      LogHelper.logAddResource(player, this);
+      player.addResourceTo(this, {log: true});
       return undefined;
     }
 

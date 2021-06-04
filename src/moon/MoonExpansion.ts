@@ -1,4 +1,3 @@
-import {LogHelper} from '../LogHelper';
 import {Game} from '../Game';
 import {ITile} from '../ITile';
 import {MoonBoard} from './MoonBoard';
@@ -16,6 +15,7 @@ import {MAXIMUM_COLONY_RATE, MAXIMUM_LOGISTICS_RATE, MAXIMUM_MINING_RATE} from '
 import {Resources} from '../Resources';
 import {Phase} from '../Phase';
 import {BoardType} from '../boards/BoardType';
+import {VictoryPointsBreakdown} from '../VictoryPointsBreakdown';
 
 // export interface CoOwnedSpace {
 //   spaceId: string;
@@ -230,8 +230,7 @@ export class MoonExpansion {
   private static activateLunaFirst(sourcePlayer: Player | undefined, game: Game, count: number) {
     const lunaFirstPlayer = MoonExpansion.moonData(game).lunaFirstPlayer;
     if (lunaFirstPlayer !== undefined) {
-      lunaFirstPlayer.megaCredits += count;
-      LogHelper.logGainStandardResource(lunaFirstPlayer, Resources.MEGACREDITS, count);
+      lunaFirstPlayer.addResource(Resources.MEGACREDITS, count, {log: true});
       if (lunaFirstPlayer.id === sourcePlayer?.id) {
         lunaFirstPlayer.addProduction(Resources.MEGACREDITS, count, {log: true});
       }
@@ -321,7 +320,7 @@ export class MoonExpansion {
     return Units.of({steel, titanium});
   }
 
-  public static calculateVictoryPoints(player: Player): void {
+  public static calculateVictoryPoints(player: Player, vpb: VictoryPointsBreakdown): void {
     MoonExpansion.ifMoon(player.game, (moonData) => {
       // Each road tile on the map awards 1VP to the player owning it.
       // Each mine and colony (habitat) tile on the map awards 1VP per road tile touching them.
@@ -332,17 +331,17 @@ export class MoonExpansion {
           const type = space.tile.tileType;
           switch (type) {
           case TileType.MOON_ROAD:
-            player.victoryPointsBreakdown.setVictoryPoints('moon road', 1);
+            vpb.setVictoryPoints('moon road', 1);
             break;
           case TileType.MOON_MINE:
           case TileType.MOON_COLONY:
           case TileType.LUNAR_MINE_URBANIZATION:
             const points = moon.getAdjacentSpaces(space).filter((adj) => MoonExpansion.spaceHasType(adj, TileType.MOON_ROAD)).length;
             if (type === TileType.MOON_MINE || type === TileType.LUNAR_MINE_URBANIZATION) {
-              player.victoryPointsBreakdown.setVictoryPoints('moon mine', points);
+              vpb.setVictoryPoints('moon mine', points);
             }
             if (type === TileType.MOON_COLONY || type === TileType.LUNAR_MINE_URBANIZATION) {
-              player.victoryPointsBreakdown.setVictoryPoints('moon colony', points);
+              vpb.setVictoryPoints('moon colony', points);
             }
             break;
           }

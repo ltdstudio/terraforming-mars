@@ -7,7 +7,6 @@ import {ResourceType} from '../../ResourceType';
 import {Tags} from '../Tags';
 import {Player} from '../../Player';
 import {Resources} from '../../Resources';
-import {LogHelper} from '../../LogHelper';
 import {SelectCard} from '../../inputs/SelectCard';
 import {OrOptions} from '../../inputs/OrOptions';
 import {SelectOption} from '../../inputs/SelectOption';
@@ -43,17 +42,16 @@ export class BioPrintingFacility extends Card implements IActionCard, IProjectCa
 
   public action(player: Player) {
     const availableAnimalCards = player.getResourceCards(ResourceType.ANIMAL);
-    player.energy -= 2;
+    player.deductResource(Resources.ENERGY, 2);
+
 
     if (availableAnimalCards.length === 0) {
-      player.plants += 2;
-      LogHelper.logGainStandardResource(player, Resources.PLANTS, 2);
+      player.addResource(Resources.PLANTS, 2, {log: true});
       return undefined;
     }
 
     const gainPlantOption = new SelectOption('Gain 2 plants', 'Gain plants', () => {
-      player.plants += 2;
-      LogHelper.logGainStandardResource(player, Resources.PLANTS, 2);
+      player.addResource(Resources.PLANTS, 2, {log: true});
       return undefined;
     });
 

@@ -1,13 +1,13 @@
-import {GameEnd} from './GameEnd';
+import GameEnd from './GameEnd.vue';
 import {CreateGameForm} from './create/CreateGameForm';
-import {GameHome} from './GameHome';
-import {GamesOverview} from './GamesOverview';
+import GameHome from './GameHome.vue';
+import GamesOverview from './GamesOverview.vue';
 import {PlayerHome} from './PlayerHome';
 import {SpectatorHome} from './SpectatorHome';
 import {PlayerModel} from '../models/PlayerModel';
 import {StartScreen} from './StartScreen';
 import {LoadGameForm} from './LoadGameForm';
-import {DebugUI} from './DebugUI';
+import DebugUI from './DebugUI.vue';
 import {SimpleGameModel} from '../models/SimpleGameModel';
 import {Help} from './help/Help';
 
@@ -72,7 +72,7 @@ export const mainAppSettings = {
     'game-home': GameHome,
     'player-home': PlayerHome,
     'spectator-home': SpectatorHome,
-    'player-end': GameEnd,
+    'game-end': GameEnd,
     'games-overview': GamesOverview,
     'debug-ui': DebugUI,
     'help': Help,
@@ -185,7 +185,7 @@ export const mainAppSettings = {
       app.screen = 'create-game-form';
     } else if (currentPathname === '/load') {
       app.screen = 'load';
-    } else if (currentPathname === '/debug-ui' || currentPathname === '/cards') {
+    } else if (currentPathname === '/cards') {
       app.screen = 'cards';
     } else if (currentPathname === '/help') {
       app.screen = 'help';
